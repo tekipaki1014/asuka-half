@@ -1,39 +1,21 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Login from "../components/Login";
 import RecordEntry from "../components/RecordEntry";
-import { RECORDS, STAFF_MASTER, MedicalRecord } from "@/lib/mockData";
-import { Plus, Search, Activity, Ambulance, AlertCircle, CheckCircle, AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
+import { RECORDS, STAFF_MASTER, MedicalRecord, getRecordCountByBib } from "@/lib/mockData";
+import { Plus, Search, Activity, CheckCircle, AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
 
 type TabId = 'ALL' | 'HQ' | '1st' | '2nd' | '3rd' | 'Finish';
 
 const TABS: { id: TabId; label: string; locationMatch: string }[] = [
   { id: 'ALL', label: '全体', locationMatch: '' },
   { id: 'HQ', label: '本部', locationMatch: '本部' },
-  { id: '1st', label: '第1救護所', locationMatch: '第1' },
-  { id: '2nd', label: '第2救護所', locationMatch: '第2' },
-  { id: '3rd', label: '第3救護所', locationMatch: '第3' },
+  { id: '1st', label: '第1', locationMatch: '第1' },
+  { id: '2nd', label: '第2', locationMatch: '第2' },
+  { id: '3rd', label: '第3', locationMatch: '第3' },
   { id: 'Finish', label: 'フィニッシュ', locationMatch: 'フィニッシュ' },
 ];
-
-// Helper: Count records per bib number across all locations
-function getRecordCountByBib(): Record<string, { count: number; locations: Set<string> }> {
-  const map: Record<string, { count: number; locations: Set<string> }> = {};
-  RECORDS.forEach(r => {
-    if (!map[r.bibNumber]) {
-      map[r.bibNumber] = { count: 0, locations: new Set() };
-    }
-    map[r.bibNumber].count++;
-    map[r.bibNumber].locations.add(r.location);
-  });
-  return map;
-}
-
-// Helper: Get all records for a specific bib number
-function getOtherRecords(bibNumber: string, excludeId: string): MedicalRecord[] {
-  return RECORDS.filter(r => r.bibNumber === bibNumber && r.id !== excludeId);
-}
 
 export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -41,10 +23,10 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<TabId>('ALL');
   const [selectedStaff, setSelectedStaff] = useState("");
   const [isEntryModalOpen, setIsEntryModalOpen] = useState(false);
+  const [editingRecord, setEditingRecord] = useState<MedicalRecord | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
 
-  // Pre-compute record counts
   const recordCounts = useMemo(() => getRecordCountByBib(), []);
 
   useEffect(() => {
@@ -69,18 +51,37 @@ export default function Home() {
     const searchMatch = !searchQuery ||
       r.bibNumber.includes(searchQuery) ||
       r.injury.includes(searchQuery) ||
+      r.content.includes(searchQuery) ||
       r.staffName.includes(searchQuery);
     return locMatch && searchMatch;
   });
 
-  const currentStaffList = activeTab === 'ALL' || activeTab === 'HQ'
-    ? STAFF_MASTER.filter(s => s.role === '本部')
-    : activeTab === '1st'
-      ? STAFF_MASTER.filter(s => s.role === '第1')
-      : STAFF_MASTER;
+  const currentStaffList = STAFF_MASTER.filter(s => {
+    if (activeTab === 'ALL' || activeTab === 'HQ') return s.role === '本部';
+    if (activeTab === '1st') return s.role === '第1';
+    if (activeTab === '2nd') return s.role === '第2';
+    if (activeTab === '3rd') return s.role === '第3';
+    if (activeTab === 'Finish') return s.role === 'フィニッシュ';
+    return true;
+  });
 
-  const toggleRow = (id: string) => {
+  const toggleExpandRow = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
     setExpandedRowId(prev => prev === id ? null : id);
+  };
+
+  const handleRowClick = (rec: MedicalRecord) => {
+    setEditingRecord(rec);
+    setIsEntryModalOpen(true);
+  };
+
+  const handleNewRecord = () => {
+    setEditingRecord(null);
+    setIsEntryModalOpen(true);
+  };
+
+  const getOtherRecords = (bibNumber: string, excludeId: string): MedicalRecord[] => {
+    return RECORDS.filter(r => r.bibNumber === bibNumber && r.id !== excludeId);
   };
 
   if (loading) return null;
@@ -131,9 +132,9 @@ export default function Home() {
           <button
             className="btn btn-primary"
             disabled={!selectedStaff}
-            onClick={() => setIsEntryModalOpen(true)}
+            onClick={handleNewRecord}
           >
-            <Plus size={18} /> 記録を追加
+            <Plus size={18} /> 新規記録
           </button>
         </div>
       )}
@@ -144,7 +145,7 @@ export default function Home() {
           <Search size={16} />
           <input
             type="text"
-            placeholder="ゼッケン番号・傷病名・担当者で検索..."
+            placeholder="ゼッケン・傷病名・内容で検索..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -154,13 +155,16 @@ export default function Home() {
           <table className="data-table">
             <thead>
               <tr>
-                <th style={{ width: 80 }}>時刻</th>
-                {activeTab === 'ALL' && <th style={{ width: 100 }}>場所</th>}
-                <th style={{ width: 100 }}>No.</th>
-                <th>傷病名</th>
-                <th style={{ width: 160 }}>状況</th>
-                <th style={{ width: 90 }}>搬送/復帰</th>
-                <th style={{ width: 100 }}>担当</th>
+                <th style={{ width: 50 }}>No.</th>
+                <th style={{ width: 60 }}>時刻</th>
+                <th style={{ width: 70 }}>発信</th>
+                {activeTab === 'ALL' && <th style={{ width: 80 }}>区</th>}
+                <th style={{ width: 70 }}>ゼッケン</th>
+                <th style={{ width: 60 }}>意識</th>
+                <th>内容</th>
+                <th style={{ width: 120 }}>対応</th>
+                <th style={{ width: 60 }}>重傷度</th>
+                <th style={{ width: 50 }}>済</th>
               </tr>
             </thead>
             <tbody>
@@ -172,87 +176,97 @@ export default function Home() {
                   const otherRecords = isExpanded ? getOtherRecords(rec.bibNumber, rec.id) : [];
 
                   return (
-                    <>
+                    <React.Fragment key={rec.id}>
                       <tr
                         key={rec.id}
-                        className={`animate-in ${hasMultipleRecords ? 'row-clickable' : ''} ${isExpanded ? 'row-expanded' : ''}`}
-                        onClick={() => hasMultipleRecords && toggleRow(rec.id)}
-                        style={{ cursor: hasMultipleRecords ? 'pointer' : 'default' }}
+                        className={`animate-in row-clickable ${isExpanded ? 'row-expanded' : ''}`}
+                        onClick={() => handleRowClick(rec)}
                       >
+                        <td className="cell-serial">{rec.serialNumber}</td>
                         <td className="cell-time">{rec.timestamp}</td>
+                        <td className="cell-sender">{rec.sender}</td>
                         {activeTab === 'ALL' && (
                           <td><span className="cell-location">{rec.location}</span></td>
                         )}
                         <td className="cell-bib">
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                             #{rec.bibNumber}
                             {hasMultipleRecords && (
-                              <span className="alert-badge" title={`${bibInfo.count}件の記録あり`}>
-                                <AlertTriangle size={12} />
-                                <span>注意</span>
-                              </span>
-                            )}
-                            {hasMultipleRecords && (
-                              isExpanded ? <ChevronUp size={14} className="expand-icon" /> : <ChevronDown size={14} className="expand-icon" />
+                              <button
+                                className="expand-btn"
+                                onClick={(e) => toggleExpandRow(rec.id, e)}
+                                title={`${bibInfo.count}件の記録`}
+                              >
+                                <span>他記録あり</span>
+                                {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                              </button>
                             )}
                           </div>
                         </td>
-                        <td className="cell-injury">{rec.injury}</td>
+                        <td className={`cell-consciousness ${rec.consciousness === '有' ? '' : 'danger'}`}>
+                          {rec.consciousness}
+                        </td>
+                        <td className="cell-content">
+                          <div className="content-truncate">{rec.content}</div>
+                        </td>
                         <td>
-                          <span className={`cell-status ${rec.ambulance ? 'status-active' : 'status-done'}`}>
-                            {rec.status}
+                          <span className={`cell-response ${rec.ambulance ? 'response-danger' : ''}`}>
+                            {rec.response}
                           </span>
                         </td>
-                        <td>
-                          <div className="cell-badges">
-                            {rec.ambulance && (
-                              <span className="badge badge-danger" title="救急搬送">
-                                <Ambulance size={14} />
-                              </span>
-                            )}
-                            {!rec.returnToRace && !rec.ambulance && (
-                              <span className="badge badge-warning" title="DNF">
-                                <AlertCircle size={14} />
-                              </span>
-                            )}
-                            {rec.returnToRace && !rec.ambulance && (
-                              <span className="badge badge-success" title="復帰済">
-                                <CheckCircle size={14} />
-                              </span>
-                            )}
-                          </div>
+                        <td className="cell-severity">
+                          {rec.severity && (
+                            <span className={`severity-badge severity-${rec.severity}`}>
+                              {rec.severity}
+                            </span>
+                          )}
                         </td>
-                        <td className="cell-staff">{rec.staffName}</td>
+                        <td className="cell-completed">
+                          {rec.completed && <CheckCircle size={18} className="check-icon" />}
+                        </td>
                       </tr>
 
-                      {/* Expanded rows showing other records for this bib number */}
+                      {/* Expanded sub-rows */}
                       {isExpanded && otherRecords.map(other => (
-                        <tr key={`sub-${other.id}`} className="sub-row animate-in">
+                        <tr
+                          key={`sub-${other.id}`}
+                          className="sub-row animate-in"
+                          onClick={() => handleRowClick(other)}
+                        >
+                          <td className="cell-serial">{other.serialNumber}</td>
                           <td className="cell-time">{other.timestamp}</td>
-                          <td colSpan={activeTab === 'ALL' ? 1 : 0}>
-                            <span className="cell-location">{other.location}</span>
+                          <td className="cell-sender">{other.sender}</td>
+                          {activeTab === 'ALL' && (
+                            <td><span className="cell-location">{other.location}</span></td>
+                          )}
+                          <td className="cell-bib">#{other.bibNumber}</td>
+                          <td className="cell-consciousness">{other.consciousness}</td>
+                          <td className="cell-content">
+                            <div className="content-truncate">{other.content}</div>
                           </td>
-                          {activeTab !== 'ALL' && <td></td>}
-                          <td className="cell-injury" style={{ color: '#666' }}>{other.injury}</td>
                           <td>
-                            <span className="cell-status status-done" style={{ background: '#E5E7EB' }}>
-                              {other.status}
+                            <span className={`cell-response ${other.ambulance ? 'response-danger' : ''}`}>
+                              {other.response}
                             </span>
                           </td>
-                          <td>
-                            <div className="cell-badges">
-                              {other.ambulance && <span className="badge badge-danger"><Ambulance size={14} /></span>}
-                            </div>
+                          <td className="cell-severity">
+                            {other.severity && (
+                              <span className={`severity-badge severity-${other.severity}`}>
+                                {other.severity}
+                              </span>
+                            )}
                           </td>
-                          <td className="cell-staff">{other.staffName}</td>
+                          <td className="cell-completed">
+                            {other.completed && <CheckCircle size={18} className="check-icon" />}
+                          </td>
                         </tr>
                       ))}
-                    </>
+                    </React.Fragment>
                   );
                 })
               ) : (
                 <tr>
-                  <td colSpan={activeTab === 'ALL' ? 7 : 6} className="empty-state">
+                  <td colSpan={activeTab === 'ALL' ? 10 : 9} className="empty-state">
                     記録がありません
                   </td>
                 </tr>
@@ -262,15 +276,17 @@ export default function Home() {
         </div>
       </main>
 
-      {/* Entry Modal */}
+      {/* Entry/Edit Modal */}
       {isEntryModalOpen && (
         <RecordEntry
           location={currentTabInfo.label}
           staffName={selectedStaff}
-          onClose={() => setIsEntryModalOpen(false)}
+          editRecord={editingRecord}
+          onClose={() => { setIsEntryModalOpen(false); setEditingRecord(null); }}
           onSave={() => {
-            alert("保存しました (Mock)");
+            alert(editingRecord ? "更新しました (Mock)" : "保存しました (Mock)");
             setIsEntryModalOpen(false);
+            setEditingRecord(null);
           }}
         />
       )}

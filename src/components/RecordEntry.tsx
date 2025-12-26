@@ -1,195 +1,266 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Search, Clock, AlertTriangle, Ambulance, Activity } from "lucide-react";
-import { RUNNER_MASTER, RECORDS, MedicalRecord } from "@/lib/mockData";
+import { X, Clock, User, Save, FileText } from "lucide-react";
+import { RUNNER_MASTER, RECORDS, MedicalRecord, Runner } from "@/lib/mockData";
 
 interface RecordEntryProps {
     location: string;
     staffName: string;
+    editRecord?: MedicalRecord | null;
     onClose: () => void;
     onSave: () => void;
 }
 
-export default function RecordEntry({ location, staffName, onClose, onSave }: RecordEntryProps) {
-    const [bibNumber, setBibNumber] = useState("");
-    const [runnerInfo, setRunnerInfo] = useState<any>(null);
-    const [history, setHistory] = useState<MedicalRecord[]>([]);
+export default function RecordEntry({ location, staffName, editRecord, onClose, onSave }: RecordEntryProps) {
+    const isEditMode = !!editRecord;
 
     // Form State
-    const [injury, setInjury] = useState("");
-    const [status, setStatus] = useState("");
-    const [ambulance, setAmbulance] = useState(false);
-    const [returnToRace, setReturnToRace] = useState(true);
+    const [bibNumber, setBibNumber] = useState(editRecord?.bibNumber || "");
+    const [runnerInfo, setRunnerInfo] = useState<Runner | null>(null);
+    const [history, setHistory] = useState<MedicalRecord[]>([]);
 
-    // Search Runner on Bib Change
+    const [sender, setSender] = useState(editRecord?.sender || "");
+    const [consciousness, setConsciousness] = useState(editRecord?.consciousness || "有");
+    const [content, setContent] = useState(editRecord?.content || "");
+    const [response, setResponse] = useState(editRecord?.response || "");
+    const [severity, setSeverity] = useState(editRecord?.severity || "");
+    const [ambulance, setAmbulance] = useState(editRecord?.ambulance || false);
+    const [completed, setCompleted] = useState(editRecord?.completed || false);
+
     useEffect(() => {
-        if (bibNumber.length >= 3) {
-            // Mock Search
+        if (bibNumber.length >= 1) {
             const runner = RUNNER_MASTER[bibNumber];
             if (runner) {
                 setRunnerInfo(runner);
-                const runnerHistory = RECORDS.filter(r => r.bibNumber === bibNumber);
+                const runnerHistory = RECORDS.filter(r => r.bibNumber === bibNumber && r.id !== editRecord?.id);
                 setHistory(runnerHistory);
             } else {
                 setRunnerInfo(null);
                 setHistory([]);
             }
+        } else {
+            setRunnerInfo(null);
+            setHistory([]);
         }
-    }, [bibNumber]);
+    }, [bibNumber, editRecord?.id]);
 
     return (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white w-full h-[95vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-fade-in">
+        <div className="modal-overlay" onClick={onClose}>
+            <div className="modal-fullwidth" onClick={(e) => e.stopPropagation()}>
 
                 {/* Header */}
-                <div className="bg-primary text-white p-4 flex justify-between items-center shadow-md z-10">
+                <div className="modal-header">
                     <div>
-                        <span className="text-primary-light text-sm font-bold uppercase tracking-wider">{location} / Staff: {staffName}</span>
-                        <h2 className="text-xl font-bold flex items-center gap-2">
-                            <Activity /> 新規記録入力
+                        <span style={{ opacity: 0.7, fontSize: 12 }}>{location} / {staffName || '担当未選択'}</span>
+                        <h2 style={{ display: 'flex', alignItems: 'center', gap: 8, margin: 0 }}>
+                            <FileText size={20} />
+                            {isEditMode ? `記録 #${editRecord.serialNumber} を編集` : '新規記録入力'}
                         </h2>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+                    <button onClick={onClose} className="modal-close-btn">
                         <X size={24} />
                     </button>
                 </div>
 
-                {/* Content - Split View */}
-                <div className="flex-1 flex flex-col h-full overflow-hidden">
+                {/* Body */}
+                <div className="modal-body-full">
 
-                    {/* TOP HALF: Input Area (Scrollable if needed, but intended to be fixed) */}
-                    <div className="h-1/2 bg-gray-50 p-6 border-b border-gray-200 overflow-y-auto">
-                        <div className="max-w-4xl mx-auto">
-                            <div className="flex gap-4 mb-6">
-                                <div className="flex-1">
-                                    <label className="block text-sm font-bold text-gray-700 mb-1">ゼッケン番号 (任意)</label>
-                                    <div className="relative">
-                                        <Search className="absolute left-3 top-3 text-gray-400" size={20} />
-                                        <input
-                                            type="tel"
-                                            value={bibNumber}
-                                            onChange={(e) => setBibNumber(e.target.value)}
-                                            className="input-field pl-10"
-                                            placeholder="1234"
-                                            autoFocus
-                                        />
-                                    </div>
-                                </div>
-                                <div className="w-1/3">
-                                    <label className="block text-sm font-bold text-gray-700 mb-1">発生時刻</label>
-                                    <div className="input-field bg-gray-100 text-gray-500 font-mono">
-                                        {new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}
-                                    </div>
-                                </div>
-                            </div>
+                    {/* Row 1: Basic Fields */}
+                    <div className="input-row">
+                        <div className="input-group">
+                            <label>ゼッケン</label>
+                            <input
+                                type="text"
+                                value={bibNumber}
+                                onChange={(e) => setBibNumber(e.target.value)}
+                                placeholder="1234"
+                                autoFocus={!isEditMode}
+                            />
+                        </div>
+                        <div className="input-group">
+                            <label>発信元</label>
+                            <input
+                                type="text"
+                                value={sender}
+                                onChange={(e) => setSender(e.target.value)}
+                                placeholder="例: ボランティア"
+                            />
+                        </div>
+                        <div className="input-group" style={{ width: 100 }}>
+                            <label>意識</label>
+                            <select value={consciousness} onChange={(e) => setConsciousness(e.target.value)}>
+                                <option value="有">有</option>
+                                <option value="無">無</option>
+                                <option value="不明">不明</option>
+                            </select>
+                        </div>
+                        <div className="input-group" style={{ width: 100 }}>
+                            <label>時刻</label>
+                            <input
+                                type="text"
+                                value={isEditMode ? editRecord.timestamp : new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}
+                                disabled
+                                className="input-disabled"
+                            />
+                        </div>
+                    </div>
 
-                            <div className="grid grid-cols-2 gap-6 mb-6">
-                                <div>
-                                    <label className="block text-sm font-bold text-gray-700 mb-1">傷病名 / 状況</label>
-                                    <input
-                                        type="text"
-                                        className="input-field"
-                                        placeholder="例: 副子が痛い、脱水気味"
-                                        value={injury}
-                                        onChange={(e) => setInjury(e.target.value)}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-bold text-gray-700 mb-1">処置内容 / ステータス</label>
-                                    <input
-                                        type="text"
-                                        className="input-field"
-                                        placeholder="例: 給水、経過観察中"
-                                        value={status}
-                                        onChange={(e) => setStatus(e.target.value)}
-                                    />
-                                </div>
-                            </div>
+                    {/* Row 2: Content */}
+                    <div className="input-row">
+                        <div className="input-group" style={{ flex: 1 }}>
+                            <label>内容（詳細）</label>
+                            <textarea
+                                value={content}
+                                onChange={(e) => setContent(e.target.value)}
+                                placeholder="状況の詳細を記入..."
+                                rows={3}
+                                className="textarea-full"
+                            />
+                        </div>
+                    </div>
 
-                            <div className="flex gap-4">
+                    {/* Row 3: Response, Severity, Status */}
+                    <div className="input-row">
+                        <div className="input-group" style={{ flex: 1 }}>
+                            <label>対応</label>
+                            <select value={response} onChange={(e) => setResponse(e.target.value)}>
+                                <option value="">選択してください</option>
+                                <option value="経過観察で継続">経過観察で継続</option>
+                                <option value="継続">継続</option>
+                                <option value="一時休止後に再開">一時休止後に再開</option>
+                                <option value="リタイア(自身)">リタイア(自身)</option>
+                                <option value="リタイア">リタイア</option>
+                                <option value="フィニッシュ救護所">フィニッシュ救護所</option>
+                                <option value="本部経過観察">本部経過観察</option>
+                                <option value="帰宅">帰宅</option>
+                                <option value="帰宅（家族迎え）">帰宅（家族迎え）</option>
+                                <option value="車両搬送">車両搬送</option>
+                                <option value="救急要請">救急要請</option>
+                                <option value="救急搬送">救急搬送</option>
+                            </select>
+                        </div>
+                        <div className="input-group" style={{ width: 150 }}>
+                            <label>重傷度</label>
+                            <select value={severity} onChange={(e) => setSeverity(e.target.value)}>
+                                <option value="">なし</option>
+                                <option value="軽度">軽度</option>
+                                <option value="中度">中度</option>
+                                <option value="重度">重度</option>
+                            </select>
+                        </div>
+                        <div className="input-group" style={{ width: 200 }}>
+                            <label>ステータス</label>
+                            <div className="status-buttons">
                                 <button
+                                    type="button"
                                     onClick={() => setAmbulance(!ambulance)}
-                                    className={`flex-1 p-4 rounded-xl border-2 flex items-center justify-center gap-2 font-bold transition-all ${ambulance ? "bg-red-50 border-red-500 text-red-600" : "bg-white border-gray-200 text-gray-400"
-                                        }`}
+                                    className={`status-btn ${ambulance ? 'active-danger' : ''}`}
                                 >
-                                    <Ambulance /> 救急搬送要請
+                                    救急
                                 </button>
                                 <button
-                                    onClick={() => setReturnToRace(!returnToRace)}
-                                    className={`flex-1 p-4 rounded-xl border-2 flex items-center justify-center gap-2 font-bold transition-all ${!returnToRace ? "bg-orange-50 border-orange-500 text-orange-600" : "bg-green-50 border-green-500 text-green-600"
-                                        }`}
+                                    type="button"
+                                    onClick={() => setCompleted(!completed)}
+                                    className={`status-btn ${completed ? 'active-success' : ''}`}
                                 >
-                                    {returnToRace ? "レース復帰可能" : "レース中断 (DNF)"}
+                                    済
                                 </button>
                             </div>
                         </div>
                     </div>
 
-                    {/* BOTTOM HALF: 2 Cols */}
-                    <div className="h-1/2 flex divide-x divide-gray-200">
-
-                        {/* LEFT: History */}
-                        <div className="w-1/2 p-6 overflow-y-auto bg-white">
-                            <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-                                <Clock size={16} /> 過去の履歴 (他拠点含む)
+                    {/* 3-Column Split */}
+                    <div className="three-panel">
+                        {/* Panel 1: Current Record Summary */}
+                        <div className="panel">
+                            <h3 className="panel-header">
+                                <FileText size={14} /> 今回の記録
                             </h3>
-                            {history.length > 0 ? (
-                                <div className="space-y-4">
-                                    {history.map((rec) => (
-                                        <div key={rec.id} className="p-3 bg-gray-50 rounded-lg border border-gray-100 text-sm">
-                                            <div className="flex justify-between mb-1">
-                                                <span className="font-bold text-primary">{rec.location}</span>
-                                                <span className="text-gray-500">{rec.timestamp}</span>
-                                            </div>
-                                            <div className="font-bold text-gray-800">{rec.injury}</div>
-                                            <div className="text-gray-600">{rec.status}</div>
-                                        </div>
-                                    ))}
+                            <div className="panel-content">
+                                <div className="summary-item">
+                                    <span className="summary-label">ゼッケン:</span>
+                                    <span className="summary-value">#{bibNumber || '-'}</span>
                                 </div>
-                            ) : (
-                                <div className="text-center text-gray-300 py-10">
-                                    履歴なし
+                                <div className="summary-item">
+                                    <span className="summary-label">発信元:</span>
+                                    <span className="summary-value">{sender || '-'}</span>
                                 </div>
-                            )}
+                                <div className="summary-item">
+                                    <span className="summary-label">対応:</span>
+                                    <span className="summary-value">{response || '-'}</span>
+                                </div>
+                                <div className="summary-item">
+                                    <span className="summary-label">重傷度:</span>
+                                    <span className="summary-value">{severity || '-'}</span>
+                                </div>
+                            </div>
                         </div>
 
-                        {/* RIGHT: Runner Info */}
-                        <div className="w-1/2 p-6 overflow-y-auto bg-purple-50">
-                            <h3 className="text-sm font-bold text-primary-light uppercase tracking-wider mb-4 flex items-center gap-2">
-                                <AlertTriangle size={16} /> ランナー情報
+                        {/* Panel 2: History */}
+                        <div className="panel">
+                            <h3 className="panel-header">
+                                <Clock size={14} /> 過去の履歴（同一ゼッケン）
                             </h3>
-                            {runnerInfo ? (
-                                <div className="space-y-4 animate-fade-in">
-                                    <div className="bg-white p-4 rounded-xl shadow-sm">
-                                        <div className="text-xs text-gray-400">氏名</div>
-                                        <div className="text-2xl font-bold text-gray-800">{runnerInfo.name}</div>
-                                        <div className="text-gray-500">{runnerInfo.age}歳 / {runnerInfo.gender}</div>
-                                    </div>
+                            <div className="panel-content panel-scrollable">
+                                {history.length > 0 ? (
+                                    <table className="history-table">
+                                        <thead>
+                                            <tr>
+                                                <th>時刻</th>
+                                                <th>場所</th>
+                                                <th>内容</th>
+                                                <th>対応</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {history.map((rec) => (
+                                                <tr key={rec.id}>
+                                                    <td>{rec.timestamp}</td>
+                                                    <td>{rec.location}</td>
+                                                    <td className="history-content">{rec.content.substring(0, 30)}...</td>
+                                                    <td>{rec.response}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                ) : (
+                                    <div className="panel-empty">履歴なし</div>
+                                )}
+                            </div>
+                        </div>
 
-                                    <div className="bg-white p-4 rounded-xl shadow-sm border-l-4 border-red-400">
-                                        <div className="text-xs text-gray-400 mb-1">緊急連絡先</div>
-                                        <div className="text-lg font-bold text-red-500">{runnerInfo.emergencyContact}</div>
+                        {/* Panel 3: Runner Info */}
+                        <div className="panel panel-highlight">
+                            <h3 className="panel-header">
+                                <User size={14} /> ランナー情報
+                            </h3>
+                            <div className="panel-content">
+                                {runnerInfo ? (
+                                    <div className="runner-card">
+                                        <div className="runner-name">{runnerInfo.name}</div>
+                                        <div className="runner-meta">
+                                            {runnerInfo.age}歳 / {runnerInfo.gender} / 過去{runnerInfo.participationCount}回参加
+                                        </div>
+                                        <div className="runner-contact">
+                                            <div className="contact-label">緊急連絡先</div>
+                                            <div className="contact-value">{runnerInfo.emergencyContact}</div>
+                                        </div>
                                     </div>
-
-                                    <div className="bg-white p-4 rounded-xl shadow-sm">
-                                        <div className="text-xs text-gray-400 mb-1">特記事項</div>
-                                        <div className="text-gray-700">{runnerInfo.notes}</div>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="text-center text-purple-200 py-10">
-                                    ゼッケンを入力すると<br />ここに情報が表示されます
-                                </div>
-                            )}
+                                ) : (
+                                    <div className="panel-empty">ゼッケンを入力すると表示</div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Footer Actions */}
-                <div className="p-4 bg-white border-t border-gray-200 flex justify-end gap-4 shadow-[0_-4px_6px_rgba(0,0,0,0.05)]">
-                    <button onClick={onClose} className="btn w-32 bg-gray-100 text-gray-600 hover:bg-gray-200">キャンセル</button>
-                    <button onClick={onSave} className="btn btn-primary w-64 shadow-lg">記録を保存</button>
+                {/* Footer */}
+                <div className="modal-footer">
+                    <button onClick={onClose} className="btn btn-secondary">キャンセル</button>
+                    <button onClick={onSave} className="btn btn-primary">
+                        <Save size={16} /> {isEditMode ? '更新する' : '記録を保存'}
+                    </button>
                 </div>
             </div>
         </div>

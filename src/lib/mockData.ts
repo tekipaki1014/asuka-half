@@ -1,14 +1,25 @@
 // ===== Types =====
 export interface MedicalRecord {
     id: string;
-    location: string;
-    staffName: string;
-    timestamp: string;
-    bibNumber: string;
-    injury: string;
-    status: string;
-    ambulance: boolean;
-    returnToRace: boolean;
+    serialNumber: number;        // 整理番号
+    timestamp: string;           // 時刻 (HH:MM)
+    sender: string;              // 発信（報告元）
+    receiver: string;            // 受信（受信者）
+    location: string;            // 区（場所）
+    bibNumber: string;           // ゼッケン
+    age?: number;                // 年齢（ランナーマスタから）
+    gender?: string;             // 性別（ランナーマスタから）
+    consciousness: string;       // 意識有無
+    content: string;             // 内容
+    response: string;            // 対応
+    severity: string;            // 重傷度
+    completed: boolean;          // 済
+    staffName: string;           // 担当者（後方互換）
+    // Legacy fields for backward compatibility
+    injury: string;              // 傷病名
+    status: string;              // 状況
+    ambulance: boolean;          // 救急搬送
+    returnToRace: boolean;       // レース復帰
 }
 
 export interface Runner {
@@ -20,6 +31,8 @@ export interface Runner {
     phone: string;
     emergencyContact: string;
     hasSupport: boolean;
+    age?: number;
+    gender?: string;
 }
 
 export interface Staff {
@@ -29,7 +42,7 @@ export interface Staff {
     qualification: string;
 }
 
-// ===== スタッフマスタ (from CSV) =====
+// ===== スタッフマスタ =====
 export const STAFF_MASTER: Staff[] = [
     { name: "和田D", furigana: "ワダディー", role: "本部", qualification: "Dr" },
     { name: "安藤AT", furigana: "アンドウエーティー", role: "本部", qualification: "AT" },
@@ -37,88 +50,77 @@ export const STAFF_MASTER: Staff[] = [
     { name: "福本AT", furigana: "フクモトエーティー", role: "本部", qualification: "AT" },
     { name: "羽角Dr", furigana: "ハスミドクター", role: "第1", qualification: "Dr" },
     { name: "西村Ns", furigana: "ニシムラナース", role: "第1", qualification: "Ns" },
-    { name: "あああ", furigana: "アアア", role: "その他", qualification: "行政" },
-    { name: "いいい", furigana: "イイイ", role: "その他", qualification: "行政" },
-    { name: "ううう", furigana: "ウウウ", role: "その他", qualification: "行政" },
-    { name: "えええ", furigana: "エエエ", role: "その他", qualification: "行政" },
-    { name: "おおお", furigana: "オオオ", role: "その他", qualification: "行政" },
+    { name: "田中AT", furigana: "タナカエーティー", role: "第2", qualification: "AT" },
+    { name: "山本Ns", furigana: "ヤマモトナース", role: "第2", qualification: "Ns" },
+    { name: "佐藤AT", furigana: "サトウエーティー", role: "第3", qualification: "AT" },
+    { name: "鈴木Dr", furigana: "スズキドクター", role: "フィニッシュ", qualification: "Dr" },
 ];
 
-// ===== ランナーマスタ (from CSV) =====
+// ===== ランナーマスタ =====
 export const RUNNER_MASTER: { [key: string]: Runner } = {
-    "1": { bibNumber: "1", name: "佐藤太郎", furigana: "サトウタロウ", address: "奈良県奈良市1丁目2-1", participationCount: 3, phone: "090-4996-6328", emergencyContact: "080-2031-4130", hasSupport: false },
-    "2": { bibNumber: "2", name: "鈴木花子", furigana: "スズキハナコ", address: "大阪府生駒市2丁目3-2", participationCount: 3, phone: "090-2550-4871", emergencyContact: "080-6200-2366", hasSupport: true },
-    "3": { bibNumber: "3", name: "高橋健一", furigana: "タカハシケンイチ", address: "京都府橿原市3丁目4-3", participationCount: 0, phone: "090-6234-8260", emergencyContact: "080-1806-3231", hasSupport: true },
-    "4": { bibNumber: "4", name: "田中美咲", furigana: "タナカミサキ", address: "兵庫県天理市4丁目5-1", participationCount: 4, phone: "090-1761-5528", emergencyContact: "080-8521-1047", hasSupport: false },
-    "5": { bibNumber: "5", name: "伊藤翔太", furigana: "イトウショウタ", address: "三重県大和郡山市5丁目6-2", participationCount: 2, phone: "090-4350-8815", emergencyContact: "080-8253-9541", hasSupport: true },
-    "6": { bibNumber: "6", name: "山本愛", furigana: "ヤマモトアイ", address: "和歌山県桜井市6丁目7-3", participationCount: 4, phone: "090-9704-8058", emergencyContact: "080-2963-4550", hasSupport: false },
-    "7": { bibNumber: "7", name: "中村大輔", furigana: "ナカムラダイスケ", address: "奈良県奈良市7丁目8-1", participationCount: 2, phone: "090-3492-9808", emergencyContact: "080-7462-4592", hasSupport: false },
-    "8": { bibNumber: "8", name: "小林彩香", furigana: "コバヤシアヤカ", address: "大阪府生駒市8丁目9-2", participationCount: 3, phone: "090-6971-8332", emergencyContact: "080-1370-9121", hasSupport: true },
-    "9": { bibNumber: "9", name: "加藤直樹", furigana: "カトウナオキ", address: "京都府橿原市9丁目10-3", participationCount: 0, phone: "090-6865-3824", emergencyContact: "080-4897-7855", hasSupport: false },
-    "10": { bibNumber: "10", name: "吉田麻衣", furigana: "ヨシダマイ", address: "兵庫県天理市10丁目11-1", participationCount: 3, phone: "090-6008-6410", emergencyContact: "080-5635-9181", hasSupport: false },
-    "11": { bibNumber: "11", name: "山田悠人", furigana: "ヤマダユウト", address: "三重県大和郡山市11丁目12-2", participationCount: 0, phone: "090-3079-9676", emergencyContact: "080-2632-5254", hasSupport: true },
-    "12": { bibNumber: "12", name: "佐々木さくら", furigana: "ササキサクラ", address: "和歌山県桜井市12丁目13-3", participationCount: 2, phone: "090-6414-7130", emergencyContact: "080-3583-6940", hasSupport: true },
-    "13": { bibNumber: "13", name: "山口裕子", furigana: "ヤマグチユウコ", address: "奈良県奈良市13丁目14-1", participationCount: 4, phone: "090-4669-3667", emergencyContact: "080-6983-4775", hasSupport: false },
-    "14": { bibNumber: "14", name: "松本誠", furigana: "マツモトマコト", address: "大阪府生駒市14丁目15-2", participationCount: 4, phone: "090-5131-5455", emergencyContact: "080-8430-1026", hasSupport: true },
-    "15": { bibNumber: "15", name: "井上結衣", furigana: "イノウエユイ", address: "京都府橿原市15丁目16-3", participationCount: 4, phone: "090-5840-5284", emergencyContact: "080-9667-2166", hasSupport: false },
-    "16": { bibNumber: "16", name: "木村亮介", furigana: "キムラリョウスケ", address: "兵庫県天理市16丁目17-1", participationCount: 5, phone: "090-4219-3420", emergencyContact: "080-9555-2922", hasSupport: true },
-    "17": { bibNumber: "17", name: "林恵", furigana: "ハヤシメグミ", address: "三重県大和郡山市17丁目18-2", participationCount: 5, phone: "090-7272-3948", emergencyContact: "080-5871-5157", hasSupport: false },
-    "18": { bibNumber: "18", name: "斎藤航", furigana: "サイトウワタル", address: "和歌山県桜井市18丁目19-3", participationCount: 5, phone: "090-1700-1012", emergencyContact: "080-6028-1505", hasSupport: false },
-    "19": { bibNumber: "19", name: "清水奈々", furigana: "シミズナナ", address: "奈良県奈良市19丁目20-1", participationCount: 4, phone: "090-6200-3327", emergencyContact: "080-4334-2505", hasSupport: false },
-    "20": { bibNumber: "20", name: "山崎修平", furigana: "ヤマザキシュウヘイ", address: "大阪府生駒市20丁目21-2", participationCount: 1, phone: "090-4213-2241", emergencyContact: "080-7510-5490", hasSupport: true },
-    "21": { bibNumber: "21", name: "阿部真由", furigana: "アベマユ", address: "京都府橿原市21丁目22-3", participationCount: 4, phone: "090-2638-1902", emergencyContact: "080-9888-5500", hasSupport: false },
-    "22": { bibNumber: "22", name: "森徹", furigana: "モリトオル", address: "兵庫県天理市22丁目23-1", participationCount: 0, phone: "090-9228-7739", emergencyContact: "080-6848-1595", hasSupport: false },
-    "23": { bibNumber: "23", name: "池田千尋", furigana: "イケダチヒロ", address: "三重県大和郡山市23丁目24-2", participationCount: 1, phone: "090-3817-3169", emergencyContact: "080-4424-2913", hasSupport: false },
-    "24": { bibNumber: "24", name: "橋本拓海", furigana: "ハシモトタクミ", address: "和歌山県桜井市24丁目25-3", participationCount: 2, phone: "090-4576-1545", emergencyContact: "080-9193-4562", hasSupport: false },
-    "25": { bibNumber: "25", name: "山下唯", furigana: "ヤマシタユイ", address: "奈良県奈良市25丁目26-1", participationCount: 4, phone: "090-9077-7185", emergencyContact: "080-1323-9357", hasSupport: false },
-    "26": { bibNumber: "26", name: "石川達也", furigana: "イシカワタツヤ", address: "大阪府生駒市26丁目27-2", participationCount: 2, phone: "090-7679-9973", emergencyContact: "080-6366-1005", hasSupport: false },
-    "27": { bibNumber: "27", name: "中島芽衣", furigana: "ナカジマメイ", address: "京都府橿原市27丁目28-3", participationCount: 3, phone: "090-5183-5000", emergencyContact: "080-8473-4968", hasSupport: true },
-    "28": { bibNumber: "28", name: "前田浩二", furigana: "マエダコウジ", address: "兵庫県天理市28丁目29-1", participationCount: 0, phone: "090-7959-3529", emergencyContact: "080-2290-4464", hasSupport: true },
-    "29": { bibNumber: "29", name: "藤田絵里", furigana: "フジタエリ", address: "三重県大和郡山市29丁目30-2", participationCount: 3, phone: "090-8671-7330", emergencyContact: "080-7303-8643", hasSupport: true },
-    "30": { bibNumber: "30", name: "小川淳", furigana: "オガワジュン", address: "和歌山県桜井市30丁目31-3", participationCount: 1, phone: "090-8043-8754", emergencyContact: "080-3077-9732", hasSupport: false },
+    "1": { bibNumber: "1", name: "佐藤太郎", furigana: "サトウタロウ", address: "奈良県奈良市", participationCount: 3, phone: "090-4996-6328", emergencyContact: "080-2031-4130", hasSupport: false, age: 42, gender: "男" },
+    "2": { bibNumber: "2", name: "鈴木花子", furigana: "スズキハナコ", address: "大阪府生駒市", participationCount: 3, phone: "090-2550-4871", emergencyContact: "080-6200-2366", hasSupport: true, age: 35, gender: "女" },
+    "3": { bibNumber: "3", name: "高橋健一", furigana: "タカハシケンイチ", address: "京都府橿原市", participationCount: 0, phone: "090-6234-8260", emergencyContact: "080-1806-3231", hasSupport: true, age: 28, gender: "男" },
+    "5": { bibNumber: "5", name: "伊藤翔太", furigana: "イトウショウタ", address: "三重県大和郡山市", participationCount: 2, phone: "090-4350-8815", emergencyContact: "080-8253-9541", hasSupport: true, age: 31, gender: "男" },
+    "7": { bibNumber: "7", name: "中村大輔", furigana: "ナカムラダイスケ", address: "奈良県奈良市", participationCount: 2, phone: "090-3492-9808", emergencyContact: "080-7462-4592", hasSupport: false, age: 45, gender: "男" },
+    "8": { bibNumber: "8", name: "小林彩香", furigana: "コバヤシアヤカ", address: "大阪府生駒市", participationCount: 3, phone: "090-6971-8332", emergencyContact: "080-1370-9121", hasSupport: true, age: 29, gender: "女" },
+    "12": { bibNumber: "12", name: "佐々木さくら", furigana: "ササキサクラ", address: "和歌山県桜井市", participationCount: 2, phone: "090-6414-7130", emergencyContact: "080-3583-6940", hasSupport: true, age: 33, gender: "女" },
+    "15": { bibNumber: "15", name: "井上結衣", furigana: "イノウエユイ", address: "京都府橿原市", participationCount: 4, phone: "090-5840-5284", emergencyContact: "080-9667-2166", hasSupport: false, age: 27, gender: "女" },
+    "18": { bibNumber: "18", name: "斎藤航", furigana: "サイトウワタル", address: "和歌山県桜井市", participationCount: 5, phone: "090-1700-1012", emergencyContact: "080-6028-1505", hasSupport: false, age: 38, gender: "男" },
+    "21": { bibNumber: "21", name: "阿部真由", furigana: "アベマユ", address: "京都府橿原市", participationCount: 4, phone: "090-2638-1902", emergencyContact: "080-9888-5500", hasSupport: false, age: 41, gender: "女" },
+    "24": { bibNumber: "24", name: "橋本拓海", furigana: "ハシモトタクミ", address: "和歌山県桜井市", participationCount: 2, phone: "090-4576-1545", emergencyContact: "080-9193-4562", hasSupport: false, age: 36, gender: "男" },
+    "27": { bibNumber: "27", name: "中島芽衣", furigana: "ナカジマメイ", address: "京都府橿原市", participationCount: 3, phone: "090-5183-5000", emergencyContact: "080-8473-4968", hasSupport: true, age: 25, gender: "女" },
+    "30": { bibNumber: "30", name: "小川淳", furigana: "オガワジュン", address: "和歌山県桜井市", participationCount: 1, phone: "090-8043-8754", emergencyContact: "080-3077-9732", hasSupport: false, age: 52, gender: "男" },
 };
 
-// ===== 対応記録 (from CSV) =====
-// Convert timestamp to time-only for display
-function parseTime(dateStr: string): string {
-    const parts = dateStr.split(' ');
-    if (parts.length > 1) {
-        return parts[1].substring(0, 5); // HH:MM
-    }
-    return dateStr;
-}
-
+// ===== 対応記録 =====
 export const RECORDS: MedicalRecord[] = [
-    { id: "1", location: "第1", staffName: "スタッフ1", timestamp: "09:00", bibNumber: "1", injury: "足関節捻挫", status: "現場確認・問診実施", ambulance: false, returnToRace: true },
-    { id: "2", location: "第2", staffName: "スタッフ2", timestamp: "09:03", bibNumber: "2", injury: "膝痛", status: "現場確認・問診実施", ambulance: false, returnToRace: true },
-    { id: "3", location: "第3", staffName: "スタッフ3", timestamp: "09:06", bibNumber: "3", injury: "下腿筋痙攣", status: "現場確認・問診実施", ambulance: false, returnToRace: true },
-    { id: "4", location: "フィニッシュ", staffName: "スタッフ4", timestamp: "09:09", bibNumber: "4", injury: "熱中症疑い", status: "現場確認・問診実施", ambulance: false, returnToRace: true },
-    { id: "5", location: "本部", staffName: "スタッフ5", timestamp: "09:12", bibNumber: "5", injury: "擦過傷", status: "現場確認・問診実施", ambulance: false, returnToRace: true },
-    { id: "6", location: "AED隊", staffName: "スタッフ6", timestamp: "09:15", bibNumber: "6", injury: "足底痛", status: "現場確認・問診実施", ambulance: false, returnToRace: true },
-    { id: "7", location: "その他", staffName: "スタッフ7", timestamp: "09:18", bibNumber: "7", injury: "腰痛", status: "現場確認・問診実施", ambulance: false, returnToRace: true },
-    { id: "8", location: "第1", staffName: "スタッフ8", timestamp: "09:21", bibNumber: "8", injury: "疲労困憊", status: "現場確認・問診実施", ambulance: false, returnToRace: true },
-    { id: "9", location: "第2", staffName: "スタッフ9", timestamp: "09:24", bibNumber: "9", injury: "嘔気", status: "現場確認・問診実施", ambulance: false, returnToRace: true },
-    { id: "10", location: "第3", staffName: "スタッフ10", timestamp: "09:27", bibNumber: "10", injury: "頭痛", status: "現場確認・問診実施", ambulance: false, returnToRace: true },
-    { id: "11", location: "フィニッシュ", staffName: "スタッフ11", timestamp: "09:30", bibNumber: "11", injury: "軽度脱水", status: "現場確認・問診実施", ambulance: false, returnToRace: true },
-    { id: "12", location: "本部", staffName: "スタッフ12", timestamp: "09:33", bibNumber: "12", injury: "足趾水疱", status: "現場確認・問診実施", ambulance: false, returnToRace: true },
-    { id: "13", location: "AED隊", staffName: "スタッフ13", timestamp: "09:36", bibNumber: "13", injury: "シンスプリント疑い", status: "現場確認・問診実施", ambulance: false, returnToRace: true },
-    { id: "14", location: "その他", staffName: "スタッフ14", timestamp: "09:39", bibNumber: "14", injury: "背部痛", status: "現場確認・問診実施", ambulance: false, returnToRace: true },
-    { id: "15", location: "第1", staffName: "スタッフ15", timestamp: "09:42", bibNumber: "15", injury: "転倒による擦過傷", status: "現場確認・問診実施", ambulance: false, returnToRace: true },
-    { id: "16", location: "第2", staffName: "スタッフ16", timestamp: "09:45", bibNumber: "16", injury: "大腿後面筋痛", status: "現場確認・問診実施", ambulance: false, returnToRace: true },
-    { id: "17", location: "第3", staffName: "スタッフ17", timestamp: "09:48", bibNumber: "17", injury: "ふくらはぎ痙攣", status: "現場確認・問診実施", ambulance: false, returnToRace: true },
-    { id: "18", location: "フィニッシュ", staffName: "スタッフ18", timestamp: "09:51", bibNumber: "18", injury: "胸苦しさ訴え", status: "現場確認・問診実施", ambulance: false, returnToRace: true },
-    { id: "19", location: "本部", staffName: "スタッフ19", timestamp: "09:54", bibNumber: "19", injury: "呼吸苦軽度", status: "現場確認・問診実施", ambulance: false, returnToRace: true },
-    { id: "20", location: "AED隊", staffName: "スタッフ20", timestamp: "09:57", bibNumber: "20", injury: "心拍上昇", status: "現場確認・問診実施", ambulance: false, returnToRace: true },
-    { id: "21", location: "第1", staffName: "本部記録1", timestamp: "10:00", bibNumber: "21", injury: "ふくらはぎ違和感", status: "ストレッチ指導", ambulance: false, returnToRace: true },
-    { id: "22", location: "第2", staffName: "本部記録2", timestamp: "10:04", bibNumber: "21", injury: "下腿筋痙攣", status: "冷却・補水", ambulance: true, returnToRace: true },
-    { id: "23", location: "第3", staffName: "本部記録3", timestamp: "10:08", bibNumber: "21", injury: "下腿筋痙攣増悪", status: "圧迫・テーピング", ambulance: true, returnToRace: true },
-    { id: "24", location: "本部", staffName: "本部記録4", timestamp: "10:12", bibNumber: "21", injury: "体温上昇", status: "問診と水分補給", ambulance: false, returnToRace: true },
-    { id: "25", location: "AED隊", staffName: "本部記録5", timestamp: "10:16", bibNumber: "21", injury: "胸部不快感訴え", status: "心電図簡易評価", ambulance: true, returnToRace: true },
-    { id: "26", location: "フィニッシュ", staffName: "本部記録6", timestamp: "10:20", bibNumber: "21", injury: "強い疲労感", status: "座位休息", ambulance: false, returnToRace: true },
-    { id: "27", location: "その他", staffName: "本部記録7", timestamp: "10:24", bibNumber: "21", injury: "軽度頭痛", status: "冷却・補水追加", ambulance: false, returnToRace: true },
-    { id: "28", location: "第1", staffName: "本部記録8", timestamp: "10:28", bibNumber: "21", injury: "左下腿痛再燃", status: "アイシング再施行", ambulance: false, returnToRace: true },
-    { id: "29", location: "第2", staffName: "本部記録9", timestamp: "10:32", bibNumber: "21", injury: "歩行時痛", status: "再診評価", ambulance: false, returnToRace: true },
-    { id: "30", location: "本部", staffName: "本部記録10", timestamp: "10:36", bibNumber: "21", injury: "痛み持続", status: "最終判断会議", ambulance: true, returnToRace: false },
+    // --- 通常のケース（重複なし）---
+    { id: "1", serialNumber: 1, timestamp: "09:12", sender: "ボランティア", receiver: "鳥田(PT)", location: "第1", bibNumber: "1", consciousness: "有", content: "開始早々棄権で、受付に歩いて戻られていますと電話。実行委員に報告", response: "リタイア(自身)", severity: "", completed: true, staffName: "羽角Dr", injury: "棄権申告", status: "受付誘導", ambulance: false, returnToRace: false },
+
+    { id: "2", serialNumber: 2, timestamp: "09:24", sender: "第1救護所", receiver: "西澤AT", location: "第1", bibNumber: "7", consciousness: "有", content: "7区、転倒して額から出血、絆創膏、リタイア\n→本部から7区へ車両を派遣し迎えに行く（薮Nsが現場で対応中）\nフィニッシュ救護所へ向かってもらうようにお伝えする、AED隊がゴールで待機\n→9:44迎えの車に乗る➡旦さん経由でフィニッシュへ誘導", response: "フィニッシュ救護所", severity: "軽度", completed: true, staffName: "西澤AT", injury: "額出血", status: "絆創膏処置", ambulance: false, returnToRace: false },
+
+    { id: "3", serialNumber: 3, timestamp: "09:35", sender: "第2救護所", receiver: "田中AT", location: "第2", bibNumber: "3", consciousness: "有", content: "膝の痛みを訴え来所。テーピング処置後、様子見で継続走行を希望", response: "経過観察で継続", severity: "", completed: true, staffName: "田中AT", injury: "膝痛", status: "テーピング", ambulance: false, returnToRace: true },
+
+    { id: "4", serialNumber: 4, timestamp: "09:48", sender: "AED隊", receiver: "本部", location: "本部", bibNumber: "5", consciousness: "有", content: "コース上でふらつき発見、声かけで意識清明。水分補給で回復傾向", response: "経過観察", severity: "", completed: true, staffName: "安藤AT", injury: "ふらつき", status: "水分補給", ambulance: false, returnToRace: true },
+
+    // --- 同一ランナー複数記録（#7 額出血の経過）---
+    { id: "5", serialNumber: 5, timestamp: "09:55", sender: "フィニッシュ", receiver: "鈴木Dr", location: "フィニッシュ", bibNumber: "7", consciousness: "有", content: "#7到着。出血は止まっている。創部洗浄と再絆創膏。本人希望で帰宅指導", response: "帰宅", severity: "軽度", completed: true, staffName: "鈴木Dr", injury: "額出血（経過）", status: "創部洗浄", ambulance: false, returnToRace: false },
+
+    { id: "6", serialNumber: 6, timestamp: "10:05", sender: "第3救護所", receiver: "佐藤AT", location: "第3", bibNumber: "12", consciousness: "有", content: "ふくらはぎ痙攣で来所。ストレッチ・冷却で軽減、10分休憩後に再走行希望", response: "一時休止後に再開", severity: "", completed: true, staffName: "佐藤AT", injury: "下腿筋痙攣", status: "ストレッチ・冷却", ambulance: false, returnToRace: true },
+
+    { id: "7", serialNumber: 7, timestamp: "10:12", sender: "第1救護所", receiver: "西村Ns", location: "第1", bibNumber: "8", consciousness: "有", content: "転倒による膝擦過傷。消毒・絆創膏処置。痛みは軽度で継続希望", response: "継続", severity: "", completed: true, staffName: "西村Ns", injury: "膝擦過傷", status: "消毒・絆創膏", ambulance: false, returnToRace: true },
+
+    // --- 同一ランナー複数記録（#12 痙攣悪化）---
+    { id: "8", serialNumber: 8, timestamp: "10:28", sender: "第3救護所", receiver: "佐藤AT", location: "第3", bibNumber: "12", consciousness: "有", content: "#12再来所。痙攣再発で歩行困難。本部に車両要請中", response: "車両搬送", severity: "中度", completed: false, staffName: "佐藤AT", injury: "下腿筋痙攣増悪", status: "車両待ち", ambulance: false, returnToRace: false },
+
+    { id: "9", serialNumber: 9, timestamp: "10:35", sender: "本部", receiver: "和田D", location: "本部", bibNumber: "15", consciousness: "有", content: "熱中症疑いで第2から搬送されてきた。体温38.2℃、冷却開始", response: "本部経過観察", severity: "中度", completed: false, staffName: "和田D", injury: "熱中症疑い", status: "冷却中", ambulance: false, returnToRace: false },
+
+    { id: "10", serialNumber: 10, timestamp: "10:42", sender: "第2救護所", receiver: "山本Ns", location: "第2", bibNumber: "18", consciousness: "有", content: "足底痛で来所。簡易テーピングで対応。ペースを落として継続希望", response: "継続", severity: "", completed: true, staffName: "山本Ns", injury: "足底痛", status: "テーピング", ambulance: false, returnToRace: true },
+
+    // --- 同一ランナー複数記録（#15 熱中症経過）---
+    { id: "11", serialNumber: 11, timestamp: "10:55", sender: "本部", receiver: "和田D", location: "本部", bibNumber: "15", consciousness: "有", content: "#15体温37.8℃まで低下。意識清明で水分摂取可能。経過良好", response: "経過良好", severity: "軽度", completed: true, staffName: "和田D", injury: "熱中症（回復中）", status: "継続観察", ambulance: false, returnToRace: false },
+
+    { id: "12", serialNumber: 12, timestamp: "11:02", sender: "AED隊", receiver: "本部", location: "本部", bibNumber: "21", consciousness: "有", content: "胸部不快感を訴え。心電図モニター装着、ST変化なし。問診で既往なし", response: "本部経過観察", severity: "中度", completed: false, staffName: "福本AT", injury: "胸部不快感", status: "心電図監視中", ambulance: false, returnToRace: false },
+
+    { id: "13", serialNumber: 13, timestamp: "11:15", sender: "第1救護所", receiver: "羽角Dr", location: "第1", bibNumber: "24", consciousness: "有", content: "嘔気あり来所。脱水傾向のため経口補水液投与。20分安静指示", response: "安静・経口補水", severity: "", completed: true, staffName: "羽角Dr", injury: "嘔気・脱水", status: "経口補水液", ambulance: false, returnToRace: true },
+
+    // --- 同一ランナー複数記録（#21 胸部不快感経過）---
+    { id: "14", serialNumber: 14, timestamp: "11:28", sender: "本部", receiver: "和田D", location: "本部", bibNumber: "21", consciousness: "有", content: "#21症状持続。念のため救急搬送を本人・家族に提案。同意得られる", response: "救急要請", severity: "重度", completed: false, staffName: "和田D", injury: "胸部不快感持続", status: "救急待ち", ambulance: true, returnToRace: false },
+
+    { id: "15", serialNumber: 15, timestamp: "11:35", sender: "フィニッシュ", receiver: "鈴木Dr", location: "フィニッシュ", bibNumber: "27", consciousness: "有", content: "完走後に過呼吸様症状。座位休息と呼吸指導で改善傾向", response: "経過観察", severity: "", completed: true, staffName: "鈴木Dr", injury: "過呼吸様", status: "呼吸指導", ambulance: false, returnToRace: false },
+
+    // --- 同一ランナー複数記録（#21 救急対応）---
+    { id: "16", serialNumber: 16, timestamp: "11:45", sender: "本部", receiver: "和田D", location: "本部", bibNumber: "21", consciousness: "有", content: "#21救急車到着。バイタル安定のまま県立医療センターへ搬送開始", response: "救急搬送", severity: "重度", completed: true, staffName: "和田D", injury: "胸部不快感", status: "救急搬送完了", ambulance: true, returnToRace: false },
+
+    { id: "17", serialNumber: 17, timestamp: "11:52", sender: "第2救護所", receiver: "田中AT", location: "第2", bibNumber: "30", consciousness: "有", content: "腰痛で来所。既往のヘルニアあり。無理せずリタイアを勧告、本人同意", response: "リタイア", severity: "", completed: true, staffName: "田中AT", injury: "腰痛（既往あり）", status: "リタイア勧告", ambulance: false, returnToRace: false },
+
+    { id: "18", serialNumber: 18, timestamp: "12:05", sender: "第3救護所", receiver: "佐藤AT", location: "第3", bibNumber: "5", consciousness: "有", content: "#5再来。先ほどのふらつきから回復し完走を目指すとのこと。激励して見送り", response: "継続", severity: "", completed: true, staffName: "佐藤AT", injury: "経過確認", status: "問題なし", ambulance: false, returnToRace: true },
+
+    // --- 同一ランナー複数記録（#12 車両搬送後）---
+    { id: "19", serialNumber: 19, timestamp: "12:12", sender: "フィニッシュ", receiver: "鈴木Dr", location: "フィニッシュ", bibNumber: "12", consciousness: "有", content: "#12車両でフィニッシュに到着。歩行可能になったが本日は終了。家族に連絡済み", response: "帰宅（家族迎え）", severity: "軽度", completed: true, staffName: "鈴木Dr", injury: "下腿筋痙攣（回復）", status: "帰宅手配", ambulance: false, returnToRace: false },
+
+    { id: "20", serialNumber: 20, timestamp: "12:25", sender: "第1救護所", receiver: "西村Ns", location: "第1", bibNumber: "2", consciousness: "有", content: "足趾水疱で来所。テーピング保護で対応。ゆっくり完走を目指すとのこと", response: "継続", severity: "", completed: true, staffName: "西村Ns", injury: "足趾水疱", status: "テーピング保護", ambulance: false, returnToRace: true },
 ];
 
 // Helper to get runner info
@@ -129,4 +131,17 @@ export function getRunner(bibNumber: string): Runner | undefined {
 // Helper to get records for a specific runner
 export function getRunnerHistory(bibNumber: string): MedicalRecord[] {
     return RECORDS.filter(r => r.bibNumber === bibNumber);
+}
+
+// Helper to count records per bib
+export function getRecordCountByBib(): { [key: string]: { count: number; locations: Set<string> } } {
+    const map: { [key: string]: { count: number; locations: Set<string> } } = {};
+    RECORDS.forEach(r => {
+        if (!map[r.bibNumber]) {
+            map[r.bibNumber] = { count: 0, locations: new Set() };
+        }
+        map[r.bibNumber].count++;
+        map[r.bibNumber].locations.add(r.location);
+    });
+    return map;
 }
