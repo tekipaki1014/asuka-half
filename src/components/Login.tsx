@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Check, Delete, ChevronRight } from "lucide-react";
+import { useState } from "react";
+import { Delete, ArrowRight, Activity, ShieldCheck } from "lucide-react";
 
 interface LoginProps {
     onLogin: () => void;
@@ -10,8 +10,6 @@ interface LoginProps {
 export default function Login({ onLogin }: LoginProps) {
     const [code, setCode] = useState("");
     const [error, setError] = useState(false);
-
-    // Focus management or just keypad clicks? Keypad clicks for mobile friendliness.
 
     const handlePress = (num: string) => {
         if (code.length < 4) {
@@ -26,7 +24,7 @@ export default function Login({ onLogin }: LoginProps) {
     };
 
     const handleEnter = () => {
-        if (code === "1234") { // Hardcoded for prototype
+        if (code === "1234") {
             onLogin();
         } else {
             setError(true);
@@ -38,64 +36,72 @@ export default function Login({ onLogin }: LoginProps) {
     };
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen p-6">
-            <div className="w-full max-w-sm">
-                <div className="mb-10 text-center">
-                    <h1 className="text-3xl font-bold mb-2 text-primary">明日香ハーフ<br />救護アプリ</h1>
-                    <p className="text-gray-500">4桁のコードを入力してください</p>
+        <div className="login-container">
+            <div className="login-card">
+                {/* Header */}
+                <div className="login-header">
+                    <div className="login-icon">
+                        <Activity size={32} />
+                    </div>
+                    <h1>明日香ハーフマラソン</h1>
+                    <p>救護・情報共有アプリ</p>
                 </div>
 
-                {/* Code Display */}
-                <div className="flex justify-center gap-4 mb-10">
-                    {[0, 1, 2, 3].map((i) => (
-                        <div
-                            key={i}
-                            className={`w-4 h-4 rounded-full transition-all duration-300 ${i < code.length
-                                    ? error
-                                        ? "bg-red-500 scale-125"
-                                        : "bg-primary scale-110"
-                                    : "bg-gray-200"
-                                }`}
-                        />
-                    ))}
-                </div>
+                {/* Code Input */}
+                <div className="login-body">
+                    <div className="code-label">
+                        <ShieldCheck size={16} />
+                        <span>アクセスコード（4桁）</span>
+                    </div>
 
-                {/* Keypad */}
-                <div className="grid grid-cols-3 gap-4 mb-6">
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
-                        <button
-                            key={num}
-                            onClick={() => handlePress(num.toString())}
-                            className="h-20 rounded-2xl bg-white text-2xl font-semibold shadow-sm hover:bg-gray-50 active:scale-95 transition-all text-gray-800"
-                        >
-                            {num}
+                    <div className="code-dots">
+                        {[0, 1, 2, 3].map((i) => (
+                            <div
+                                key={i}
+                                className={`code-dot ${i < code.length
+                                        ? error
+                                            ? "filled error"
+                                            : "filled"
+                                        : ""
+                                    }`}
+                            />
+                        ))}
+                    </div>
+
+                    {/* Keypad */}
+                    <div className="keypad">
+                        {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
+                            <button
+                                key={num}
+                                onClick={() => handlePress(num.toString())}
+                                className="keypad-btn"
+                            >
+                                {num}
+                            </button>
+                        ))}
+                        <button onClick={handleDelete} className="keypad-btn keypad-action">
+                            <Delete size={22} />
                         </button>
-                    ))}
-                    <button
-                        onClick={handleDelete}
-                        className="h-20 rounded-2xl bg-gray-100 flex items-center justify-center text-gray-600 active:scale-95 transition-all"
-                    >
-                        <Delete size={28} />
-                    </button>
-                    <button
-                        onClick={() => handlePress("0")}
-                        className="h-20 rounded-2xl bg-white text-2xl font-semibold shadow-sm hover:bg-gray-50 active:scale-95 transition-all text-gray-800"
-                    >
-                        0
-                    </button>
-                    <button
-                        onClick={handleEnter}
-                        disabled={code.length !== 4}
-                        className={`h-20 rounded-2xl flex items-center justify-center text-white text-xl font-bold active:scale-95 transition-all ${code.length === 4 ? "bg-primary shadow-lg shadow-purple-200" : "bg-gray-300"
-                            }`}
-                    >
-                        <ChevronRight size={32} />
-                    </button>
+                        <button
+                            onClick={() => handlePress("0")}
+                            className="keypad-btn"
+                        >
+                            0
+                        </button>
+                        <button
+                            onClick={handleEnter}
+                            disabled={code.length !== 4}
+                            className={`keypad-btn keypad-enter ${code.length === 4 ? "ready" : ""}`}
+                        >
+                            <ArrowRight size={24} />
+                        </button>
+                    </div>
                 </div>
 
-                <p className="text-center text-xs text-gray-400 mt-8">
-                    Code: 1234 (Prototype)
-                </p>
+                {/* Footer */}
+                <div className="login-footer">
+                    <p>デモ用コード: <strong>1234</strong></p>
+                </div>
             </div>
         </div>
     );

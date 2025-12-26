@@ -644,3 +644,176 @@ body {
 .sub-row .cell-time {
   font-size: 12px;
 }
+
+/* ===== Login Page ===== */
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+  padding: 24px;
+}
+
+.login-card {
+  background: var(--surface);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 380px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+
+.login-header {
+  background: var(--bg);
+  padding: 32px 24px;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+}
+
+.login-icon {
+  width: 64px;
+  height: 64px;
+  background: var(--primary);
+  color: white;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+}
+
+.login-header h1 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.login-header p {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.login-body {
+  padding: 24px;
+}
+
+.code-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 16px;
+}
+
+.code-dots {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.code-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: all 0.2s ease;
+}
+
+.code-dot.filled {
+  background: var(--primary);
+  transform: scale(1.1);
+}
+
+.code-dot.filled.error {
+  background: var(--danger);
+  animation: shake 0.3s ease;
+}
+
+@keyframes shake {
+
+  0%,
+  100% {
+    transform: translateX(0) scale(1.1);
+  }
+
+  25% {
+    transform: translateX(-4px) scale(1.1);
+  }
+
+  75% {
+    transform: translateX(4px) scale(1.1);
+  }
+}
+
+.keypad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.keypad-btn {
+  height: 60px;
+  border: none;
+  border-radius: 12px;
+  background: var(--bg);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.keypad-btn:hover {
+  background: var(--border);
+}
+
+.keypad-btn:active {
+  transform: scale(0.96);
+}
+
+.keypad-action {
+  color: var(--text-muted);
+}
+
+.keypad-enter {
+  background: var(--border);
+  color: var(--text-light);
+}
+
+.keypad-enter.ready {
+  background: var(--primary);
+  color: white;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+}
+
+.keypad-enter.ready:hover {
+  background: var(--primary-hover);
+}
+
+.login-footer {
+  padding: 16px 24px;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+
+.login-footer p {
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+.login-footer strong {
+  color: var(--primary);
+  font-weight: 700;
+}
